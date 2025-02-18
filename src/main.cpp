@@ -69,7 +69,7 @@ static int sdl_fillrect(int x, int y, int w, int h, unsigned int color) {
 }
 
 bool is_little_won(char board[3][3][3][3], int last_move[4]) {
-     char (*grid)[3] = board[last_move[0]][last_move[1]];
+     char (*grid)[3] = board[last_move[2]][last_move[3]];
 
      /* Check vertical lines*/
      for (int x = 0; x < 3; x++) {
@@ -89,27 +89,26 @@ bool is_little_won(char board[3][3][3][3], int last_move[4]) {
      return ((grid[0][0] != 0 && grid[1][1] == grid[0][0] && grid[0][0] == grid[2][2]) || (grid[2][0] != 0 && grid[1][1] == grid[2][0] && grid[2][0] == grid[0][2]));
 }
 
-bool is_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
+bool is_grid_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
      int move[4] = {X, Y, X, Y};
 
      if (last_move[0] == 4) {
           return true;
      }
 
-     if (!is_little_won(board, move) && last_move[2] == X && last_move[3] == Y) {
-          /* If the grid that should be played and isn't won*/
-          return true;
+     if (is_little_won(board, move)) {
+          return false;
      }
 
-     if (is_little_won(board, last_move)) {
-          /* If the grid that should be played is won, check if grid tried isn't won*/
-          if (!is_little_won(board, move)) {
+     if (last_move[2] == X && last_move[3] == Y) {
+          /* Right grid */
+          return true;
+     } else {
+          if (is_little_won(board, last_move)) {
                return true;
           } else {
                return false;
           }
-     } else {
-          return false;
      }
 }
 
@@ -125,8 +124,13 @@ void make_move(int mouse_x, int mouse_y, char (&turn), char(&board)[3][3][3][3],
      SDL_Log("boardx = %d, boardy = %d", boardx, boardy);
      SDL_Log("turn = %c", turn);
 
-     /* If it is the first move we can skip the tests */
-     if (is_playable(boardX, boardY, board, last_move)) {
+     if (boardX == last_move[0] && boardY == last_move[1]) {
+          if (boardx == last_move[2] && boardy == last_move[3]) {
+               return;
+          }
+     }
+
+     if (is_grid_playable(boardX, boardY, board, last_move)) {
           int move[4] = {boardX, boardY, boardx, boardy};
           board[boardX][boardY][boardx][boardy] = turn;
           turn = -turn;
@@ -194,7 +198,7 @@ int main(int argc, char* argv[]) {
                     int x_start = X * (main_square_side + main_line_width);
                     int y_start = Y * (main_square_side + main_line_width);
                     // Si le grille de 3x3 est jouable, la montrer d'une couleur differente
-                    if (is_playable(X, Y, board, last_move)) {
+                    if (is_grid_playable(X, Y, board, last_move)) {
                          sdl_fillrect(x_start, y_start, main_square_side, main_square_side, highlight);
                     }
 
