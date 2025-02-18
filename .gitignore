@@ -1,0 +1,5 @@
+./include
+./libs/*
+./cmake-build-debug
+./.github
+./.idea
