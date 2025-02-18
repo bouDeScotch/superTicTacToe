@@ -201,17 +201,22 @@ int main(int argc, char* argv[]) {
                for (int Y = 0; Y < 3; Y++) {
                     int x_start = X * (main_square_side + main_line_width);
                     int y_start = Y * (main_square_side + main_line_width);
-                    // Si le grille de 3x3 est jouable, la montrer d'une couleur differente
-                    if (is_grid_playable(X, Y, board, last_move)) {
-                         sdl_fillrect(x_start, y_start, main_square_side, main_square_side, highlight);
-                    }
 
                     // Dessiner les 9 petites cases à l'intérieur
                     for (int x = 0; x < 3; x++) {
                          for (int y = 0; y < 3; y++) {
                               int x_cell = x_start + x * (lower_square_side + lower_line_width);
                               int y_cell = y_start + y * (lower_square_side + lower_line_width);
-                              sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, line_color);
+
+                              if (is_grid_playable(X, Y, board, last_move)) {
+                                   if (board[X][Y][x][y] == 0) {
+                                        sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, highlight);
+                                   } else {
+                                        sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, line_color);
+                                   }
+                              } else {
+                                   sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, line_color);
+                              }
 
                               SDL_Rect rect;
                               rect.x = x_cell;
