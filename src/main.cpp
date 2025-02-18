@@ -68,25 +68,29 @@ static int sdl_fillrect(int x, int y, int w, int h, unsigned int color) {
      return SDL_RenderFillRect(sdl_renderer, &rect);
 }
 
-bool is_little_won(char board[3][3][3][3], int last_move[4]) {
+char is_little_won(char board[3][3][3][3], int last_move[4]) {
      char (*grid)[3] = board[last_move[2]][last_move[3]];
 
      /* Check vertical lines*/
      for (int x = 0; x < 3; x++) {
           if (grid[x][0] != 0 && grid[x][1] == grid[x][0] && grid[x][1] == grid[x][2]) {
-               return true;
+               return grid[x][0];
           }
      }
 
      /* Check horizontal lines */
      for (int y = 0; y < 3; y++) {
           if (grid[0][y] != 0 && grid[1][y] == grid[0][y] && grid[1][y] == grid[2][y]) {
-               return true;
+               return grid[0][y];
           }
      }
 
      /* Check diagonals*/
-     return ((grid[0][0] != 0 && grid[1][1] == grid[0][0] && grid[0][0] == grid[2][2]) || (grid[2][0] != 0 && grid[1][1] == grid[2][0] && grid[2][0] == grid[0][2]));
+     if ((grid[0][0] != 0 && grid[1][1] == grid[0][0] && grid[0][0] == grid[2][2]) || (grid[2][0] != 0 && grid[1][1] == grid[2][0] && grid[2][0] == grid[0][2])) {
+          return grid[1][1];
+     };
+
+     return 0;
 }
 
 bool is_grid_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
@@ -96,7 +100,7 @@ bool is_grid_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
           return true;
      }
 
-     if (is_little_won(board, move)) {
+     if (is_little_won(board, move) != 0) {
           return false;
      }
 
@@ -104,7 +108,7 @@ bool is_grid_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
           /* Right grid */
           return true;
      } else {
-          if (is_little_won(board, last_move)) {
+          if (is_little_won(board, last_move) != 0) {
                return true;
           } else {
                return false;
@@ -222,6 +226,17 @@ int main(int argc, char* argv[]) {
                          }
                     }
 
+                    SDL_Rect rect2;
+                    rect2.x = x_start;
+                    rect2.y = y_start;
+                    rect2.w = main_square_side;
+                    rect2.h = main_square_side;
+                    int move[4] = {X, Y, X, Y};
+                    if (is_little_won(board, move) == CIRCLE) {
+                         SDL_RenderCopy(sdl_renderer, circle_texture, NULL, &rect2);
+                    } else if (is_little_won(board, move) == CROSS) {
+                         SDL_RenderCopy(sdl_renderer, cross_texture, NULL, &rect2);
+                    }
                }
           }
 
