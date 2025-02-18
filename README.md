@@ -44,4 +44,4 @@ Assurez-vous d'avoir installé les bibliothèques suivantes :
 
 Une video de demo, de l'avancée actuelle du programme si j'ai pensé à l'update, sinon du 18 fevrier 2025
 
-[Lien](/forREADME/demo.mp4)
+[Lien vers la video, normalement](/forREADME/demo.mp4)
