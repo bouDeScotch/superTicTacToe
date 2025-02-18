@@ -39,3 +39,12 @@ Assurez-vous d'avoir installé les bibliothèques suivantes :
     make
     ./MandelbrotSetInCpp
     ```
+   
+### Demo
+
+Une video de demo, de l'avancée actuelle du programme si j'ai pensé à l'update, sinon du 18 fevrier 2025
+
+<video width="320" height="240" controls>
+  <source src="./forREADME/demo.mp4" type="video/mp4">
+  Votre navigateur ne supporte pas la balise vidéo.
+</video>
