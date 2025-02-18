@@ -1,7 +1,7 @@
 ## Presentation
 
-Ce projet est une implémentation du [Mandelbrot Set](https://fr.wikipedia.org/wiki/Ensemble_de_Mandelbrot) en C++ avec la bibliothèque [SDL2](https://www.libsdl.org/).
-On peut zoomer sur l'ensemble de Mandelbrot en cliquant et en selectionnant une zone de l'écran avec la souris.
+Ce projet est une implémentation d'un jeu dont je n'ai pas retrouvé le nom mais que j'ai appellé "Super Tic-Tac-Toe"
+Le jeu ressemble au morpion (tic-tac-toe en anglais), mais chaque case est en fait elle-meme une grille de morpion. La case sur laquelle l'adversaire jouer determine dans quel morpion il faut jouer, sauf si le morpion est deja terminer auquel cas on choisit. Le premier à aligner 3 parties de morpions a gagné, si personne n'y arrive il y a égalité. 
 
 ## Installation
 
