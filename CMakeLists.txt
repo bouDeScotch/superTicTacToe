@@ -7,5 +7,5 @@ add_executable(superTicTacToe WIN32 ./src/main.cpp)
 
 target_include_directories(superTicTacToe PUBLIC "${CMAKE_SOURCE_DIR}/include/")
 
-target_link_libraries(superTicTacToe "${CMAKE_SOURCE_DIR}/libs/x64/SDL2main.lib")
-target_link_libraries(superTicTacToe "${CMAKE_SOURCE_DIR}/libs/x64/SDL2.lib")
+find_package(SDL2 REQUIRED)
+target_link_libraries(superTicTacToe SDL2::SDL2 SDL2::SDL2main)
