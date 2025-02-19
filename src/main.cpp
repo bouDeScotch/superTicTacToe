@@ -144,6 +144,34 @@ void make_move(int mouse_x, int mouse_y, char (&turn), char(&board)[3][3][3][3],
      }
 }
 
+void import_image(const char *path, SDL_Texture* (&texture_var)) {
+     SDL_Surface* surface = IMG_Load(path);
+     if (surface == NULL) {
+          SDL_Log("IMG_Load: %s", IMG_GetError());
+          return;
+     }
+
+     texture_var = SDL_CreateTextureFromSurface(sdl_renderer, surface);
+     SDL_FreeSurface(surface);
+}
+
+void import_image(const char *path, SDL_Texture* (&texture_var), int (&image_x), int (&image_y)) {
+     import_image(path, texture_var);
+     SDL_QueryTexture(texture_var, NULL, NULL, &image_x, &image_y);
+}
+
+void initialize_board(char(&board)[3][3][3][3]) {
+     for (auto & X : board) {
+          for (auto & Y : X) {
+               for (auto & x : Y) {
+                    for (char & y : x) {
+                         y = 0;
+                    }
+               }
+          }
+     }
+};
+
 int main(int argc, char* argv[]) {
      SDL_Init(SDL_INIT_VIDEO);
      if (IMG_Init(IMG_INIT_PNG) == 0) {
@@ -154,32 +182,14 @@ int main(int argc, char* argv[]) {
      sdl_window = SDL_CreateWindow("Super Tic Tac Toe", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
      sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_PRESENTVSYNC);
 
-     SDL_Surface* circle_surface = IMG_Load("assets/Circle.png");
-     SDL_Surface* cross_surface = IMG_Load("assets/Cross.png");
-
-     SDL_Texture* circle_texture = SDL_CreateTextureFromSurface(sdl_renderer, circle_surface);
-     SDL_Texture* cross_texture = SDL_CreateTextureFromSurface(sdl_renderer, cross_surface);
-
-     SDL_FreeSurface(circle_surface);
-     SDL_FreeSurface(cross_surface);
-
      int circle_x, circle_y;
-     SDL_QueryTexture(circle_texture, NULL, NULL, &circle_x, &circle_y);
-
      int cross_square_x, cross_square_y;
-     SDL_QueryTexture(cross_texture, NULL, NULL, &cross_square_x, &cross_square_y);
-
+     SDL_Texture *circle_texture, *cross_texture;
+     import_image("assets/Circle.png", circle_texture, circle_x, circle_y);
+     import_image("assets/Cross.png", cross_texture, cross_square_x, cross_square_y);
 
      char board[3][3][3][3];
-     for (int X = 0; X < 3; X++) {
-          for (int Y = 0; Y < 3; Y++) {
-               for (int x = 0; x < 3; x++) {
-                    for (int y = 0; y < 3; y++) {
-                         board[X][Y][x][y] = 0;
-                    }
-               }
-          }
-     }
+     initialize_board(board);
 
      while (!sdl_quit) {
           while (SDL_PollEvent(&sdl_event)) {
