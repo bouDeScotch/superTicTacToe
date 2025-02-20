@@ -128,10 +128,8 @@ void make_move(int mouse_x, int mouse_y, char (&turn), char(&board)[3][3][3][3],
      SDL_Log("boardx = %d, boardy = %d", boardx, boardy);
      SDL_Log("turn = %c", turn);
 
-     if (boardX == last_move[0] && boardY == last_move[1]) {
-          if (boardx == last_move[2] && boardy == last_move[3]) {
-               return;
-          }
+     if (board[boardX][boardY][boardx][boardy] != 0) {
+          return;
      }
 
      if (is_grid_playable(boardX, boardY, board, last_move)) {
