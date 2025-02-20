@@ -32,6 +32,8 @@ const char CROSS = -1;
 char turn = CIRCLE;
 int last_move[4] = {4, 4, 4, 4}; /* This is not a possible value so we'll know it's the first move */
 
+char winner = 0;
+
 static void sdl_process_event(SDL_Event *event) {
      switch (event->type) {
           case SDL_QUIT:
@@ -68,17 +70,14 @@ static int sdl_fillrect(int x, int y, int w, int h, unsigned int color) {
      return SDL_RenderFillRect(sdl_renderer, &rect);
 }
 
-char is_little_won(char board[3][3][3][3], int last_move[4]) {
-     char (*grid)[3] = board[last_move[2]][last_move[3]];
-
-     /* Check vertical lines*/
+char winner_grid(char grid[3][3]) {
+     // Check for vertical lines
      for (int x = 0; x < 3; x++) {
           if (grid[x][0] != 0 && grid[x][1] == grid[x][0] && grid[x][1] == grid[x][2]) {
                return grid[x][0];
           }
      }
 
-     /* Check horizontal lines */
      for (int y = 0; y < 3; y++) {
           if (grid[0][y] != 0 && grid[1][y] == grid[0][y] && grid[1][y] == grid[2][y]) {
                return grid[0][y];
@@ -91,6 +90,24 @@ char is_little_won(char board[3][3][3][3], int last_move[4]) {
      };
 
      return 0;
+}
+
+char is_little_won(char board[3][3][3][3], int last_move[4]) {
+     char (*grid)[3] = board[last_move[0]][last_move[1]];
+
+     return winner_grid(grid);
+}
+
+char is_whole_won(char board[3][3][3][3]) {
+     char grid[3][3];
+     for (int X = 0; X < 3; X++) {
+          for (int Y = 0; Y < 3; Y++) {
+               int move[4] = {X, Y, 0, 0};
+               grid[X][Y] = is_little_won(board, move);
+          }
+     }
+
+     return winner_grid(grid);
 }
 
 bool is_grid_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
@@ -117,30 +134,42 @@ bool is_grid_playable(int X, int Y, char board[3][3][3][3], int last_move[4]) {
 }
 
 void make_move(int mouse_x, int mouse_y, char (&turn), char(&board)[3][3][3][3], int (&last_move)[4]) {
-     int boardX, boardY, boardx, boardy;
-     boardX = mouse_x / (main_square_side + main_line_width);
-     boardY = mouse_y / (main_square_side + main_line_width);
+     int boardX = mouse_x / (main_square_side + main_line_width);
+     int boardY = mouse_y / (main_square_side + main_line_width);
 
-     boardx = mouse_x / (lower_square_side + lower_line_width) - 3 * boardX;
-     boardy = mouse_y / (lower_square_side + lower_line_width) - 3 * boardY;
+     int boardx = (mouse_x % (main_square_side + main_line_width)) / (lower_square_side + lower_line_width);
+     int boardy = (mouse_y % (main_square_side + main_line_width)) / (lower_square_side + lower_line_width);
 
      SDL_Log("boardX = %d, boardY = %d", boardX, boardY);
      SDL_Log("boardx = %d, boardy = %d", boardx, boardy);
      SDL_Log("turn = %c", turn);
 
+     // Vérification de l'intérieur des limites
+     if (boardX < 0 || boardX >= 3 || boardY < 0 || boardY >= 3 ||
+         boardx < 0 || boardx >= 3 || boardy < 0 || boardy >= 3) {
+          return;
+         }
+
+     // Vérifier si la case est déjà occupée
      if (board[boardX][boardY][boardx][boardy] != 0) {
           return;
      }
 
-     if (is_grid_playable(boardX, boardY, board, last_move)) {
-          int move[4] = {boardX, boardY, boardx, boardy};
-          board[boardX][boardY][boardx][boardy] = turn;
-          turn = -turn;
-          for (int i = 0; i < 4; i++) {
-               last_move[i] = move[i];
-          }
+     // Vérifier si la grille est jouable
+     if (!is_grid_playable(boardX, boardY, board, last_move)) {
+          return;
      }
+
+     // Placer le symbole et mettre à jour `last_move`
+     board[boardX][boardY][boardx][boardy] = turn;
+     last_move[0] = boardX;
+     last_move[1] = boardY;
+     last_move[2] = boardx;
+     last_move[3] = boardy;
+
+     turn = -turn;
 }
+
 
 void import_image(const char *path, SDL_Texture* (&texture_var)) {
      SDL_Surface* surface = IMG_Load(path);
@@ -219,7 +248,9 @@ int main(int argc, char* argv[]) {
                sdl_process_event(&sdl_event);
           }
 
-          if (turn == CIRCLE) {
+          winner = is_whole_won(board);
+
+          if (turn == CIRCLE and not winner) {
                // Make a move at random
                int all_moves[81][4];
                int number_possible_moves = get_all_possible_moves(board, last_move, all_moves);
@@ -233,7 +264,7 @@ int main(int argc, char* argv[]) {
                make_move(mouse_x_sim, mouse_y_sim, turn, board, last_move);
           }
 
-          if (is_mouse_just_released) {
+          if (is_mouse_just_released and not winner) {
                make_move(mouse_down_x, mouse_down_y, turn, board, last_move);
                is_mouse_just_released = !is_mouse_just_released;
           }
@@ -245,54 +276,67 @@ int main(int argc, char* argv[]) {
 
           /* Add the 9 grids */
 
-          for (int X = 0; X < 3; X++) {
-               for (int Y = 0; Y < 3; Y++) {
-                    int x_start = X * (main_square_side + main_line_width);
-                    int y_start = Y * (main_square_side + main_line_width);
+          if (not winner) {
+               for (int X = 0; X < 3; X++) {
+                    for (int Y = 0; Y < 3; Y++) {
+                         int x_start = X * (main_square_side + main_line_width);
+                         int y_start = Y * (main_square_side + main_line_width);
 
-                    // Dessiner les 9 petites cases à l'intérieur
-                    for (int x = 0; x < 3; x++) {
-                         for (int y = 0; y < 3; y++) {
-                              int x_cell = x_start + x * (lower_square_side + lower_line_width);
-                              int y_cell = y_start + y * (lower_square_side + lower_line_width);
+                         // Dessiner les 9 petites cases à l'intérieur
+                         for (int x = 0; x < 3; x++) {
+                              for (int y = 0; y < 3; y++) {
+                                   int x_cell = x_start + x * (lower_square_side + lower_line_width);
+                                   int y_cell = y_start + y * (lower_square_side + lower_line_width);
 
-                              if (is_grid_playable(X, Y, board, last_move)) {
-                                   if (board[X][Y][x][y] == 0) {
-                                        sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, highlight);
+                                   if (is_grid_playable(X, Y, board, last_move)) {
+                                        if (board[X][Y][x][y] == 0) {
+                                             sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, highlight);
+                                        } else {
+                                             sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, line_color);
+                                        }
                                    } else {
                                         sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, line_color);
                                    }
-                              } else {
-                                   sdl_fillrect(x_cell, y_cell, lower_square_side, lower_square_side, line_color);
-                              }
 
-                              SDL_Rect rect;
-                              rect.x = x_cell;
-                              rect.y = y_cell;
-                              rect.w = lower_square_side;
-                              rect.h = lower_square_side;
-                              if (board[X][Y][x][y] == 1) {
-                                   SDL_RenderCopy(sdl_renderer, circle_texture, NULL, &rect);
-                              } else if (board[X][Y][x][y] == -1) {
-                                   SDL_RenderCopy(sdl_renderer, cross_texture, NULL, &rect);
+                                   SDL_Rect rect;
+                                   rect.x = x_cell;
+                                   rect.y = y_cell;
+                                   rect.w = lower_square_side;
+                                   rect.h = lower_square_side;
+                                   if (board[X][Y][x][y] == 1) {
+                                        SDL_RenderCopy(sdl_renderer, circle_texture, NULL, &rect);
+                                   } else if (board[X][Y][x][y] == -1) {
+                                        SDL_RenderCopy(sdl_renderer, cross_texture, NULL, &rect);
+                                   }
                               }
                          }
-                    }
 
-                    SDL_Rect rect2;
-                    rect2.x = x_start;
-                    rect2.y = y_start;
-                    rect2.w = main_square_side;
-                    rect2.h = main_square_side;
-                    int move[4] = {X, Y, X, Y};
-                    if (is_little_won(board, move) == CIRCLE) {
-                         SDL_RenderCopy(sdl_renderer, circle_texture, NULL, &rect2);
-                    } else if (is_little_won(board, move) == CROSS) {
-                         SDL_RenderCopy(sdl_renderer, cross_texture, NULL, &rect2);
+                         SDL_Rect rect2;
+                         rect2.x = x_start;
+                         rect2.y = y_start;
+                         rect2.w = main_square_side;
+                         rect2.h = main_square_side;
+                         int move[4] = {X, Y, X, Y};
+                         if (is_little_won(board, move) == CIRCLE) {
+                              SDL_RenderCopy(sdl_renderer, circle_texture, NULL, &rect2);
+                         } else if (is_little_won(board, move) == CROSS) {
+                              SDL_RenderCopy(sdl_renderer, cross_texture, NULL, &rect2);
+                         }
                     }
                }
-          }
+          } else {
+               SDL_Rect rect;
+               rect.x = main_square_side;
+               rect.y = main_square_side;
+               rect.w = main_square_side;
+               rect.h = main_square_side;
 
+               if (winner == CIRCLE) {
+                    SDL_RenderCopy(sdl_renderer, circle_texture, NULL, &rect);
+               } else {
+                    SDL_RenderCopy(sdl_renderer, cross_texture, NULL, &rect);
+               }
+          }
           SDL_RenderPresent(sdl_renderer);
      }
      return 0;
