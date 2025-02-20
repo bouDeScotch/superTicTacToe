@@ -172,6 +172,31 @@ void initialize_board(char(&board)[3][3][3][3]) {
      }
 };
 
+int get_all_possible_moves(char board[3][3][3][3], int last_move[4], int (&all_moves)[81][4]) {
+     int i = 0;
+     for (int X = 0; X < 3; X++) {
+          for (int Y = 0; Y < 3; Y++) {
+               if (!is_grid_playable(X, Y, board, last_move)) {
+                    continue;
+               }
+
+               for (int y = 0; y < 3; y++) {
+                    for (int x = 0; x < 3; x++) {
+                         int move[4] = {X, Y, x, y};
+                         if (board[move[0]][move[1]][move[2]][move[3]] == 0) {
+                              for (int k = 0; k < 4; k++) {
+                                   all_moves[i][k] = move[k];
+                              }
+                              i++;
+                         }
+                    }
+               }
+          }
+     }
+
+     return i;
+}
+
 int main(int argc, char* argv[]) {
      SDL_Init(SDL_INIT_VIDEO);
      if (IMG_Init(IMG_INIT_PNG) == 0) {
@@ -195,6 +220,21 @@ int main(int argc, char* argv[]) {
           while (SDL_PollEvent(&sdl_event)) {
                sdl_process_event(&sdl_event);
           }
+
+          if (turn == CIRCLE) {
+               // Make a move at random
+               int all_moves[81][4];
+               int number_possible_moves = get_all_possible_moves(board, last_move, all_moves);
+               int random_idx = rand() % number_possible_moves;
+               int mouse_x_sim;
+               int mouse_y_sim;
+               mouse_x_sim = all_moves[random_idx][0] * (main_square_side + main_line_width);
+               mouse_x_sim += all_moves[random_idx][2] * (lower_square_side + lower_line_width);
+               mouse_y_sim = all_moves[random_idx][1] * (main_square_side + main_line_width);
+               mouse_y_sim += all_moves[random_idx][3] * (lower_square_side + lower_line_width);
+               make_move(mouse_x_sim, mouse_y_sim, turn, board, last_move);
+          }
+
           if (is_mouse_just_released) {
                make_move(mouse_down_x, mouse_down_y, turn, board, last_move);
                is_mouse_just_released = !is_mouse_just_released;
